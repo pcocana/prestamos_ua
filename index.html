@@ -40,8 +40,9 @@ canvas{width:100%;height:auto;display:block}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;margin-bottom:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
 .tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:.85rem}
-.tl li{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:8px;align-items:center}
+.tl li{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;align-items:center}
 .tl .bar{height:5px;background:var(--accent);border-radius:3px;margin-top:3px}
+#bd li{cursor:pointer}#bd li:hover .t{color:var(--accent)}
 .tl .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tl .n{text-align:right;font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
 .tw{overflow:auto;max-height:420px;margin-top:10px}
@@ -58,7 +59,7 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
 <div class="wrap">
 <header>
   <div><h1>Informe de préstamos por carrera</h1>
-  <p class="sub">Carga el Excel exportado de Koha y obtén el dashboard, el PDF y el Excel de resumen. Todo se procesa en este computador; los datos no se envían a ningún servidor.</p></div>
+  <p class="sub">Carga el Excel de préstamos exportado de Koha (una carrera o toda la biblioteca), filtra por unidad académica, tipo de usuario o carrera, y descarga el PDF y el Excel de resumen. Todo se procesa en este computador; los datos no se envían a ningún servidor.</p></div>
   <div class="btns" id="actions" hidden>
     <button class="btn p" id="bpdf" type="button">Descargar PDF</button>
     <button class="btn p" id="bxls" type="button">Descargar Excel</button>
@@ -77,8 +78,7 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
   <div class="row"><label for="ttl">Título del informe</label><input type="text" id="ttl"></div>
   <div class="row" id="frow">
     <span id="yf" class="row" role="group" aria-label="Filtrar por año"></span>
-    <span class="row" id="carw"><label for="car">Carrera</label><select id="car"></select></span>
-    <span class="row" id="trw"><label for="trs">Transacción</label><select id="trs"></select></span>
+    <span class="row" id="fsel"></span>
   </div>
   <div class="kpis" id="kpis"></div>
   <section class="card"><h2>Préstamos por año y tipo de material</h2><div class="legend" id="lg"></div><canvas id="c1" aria-label="Gráfico de préstamos por año"></canvas><p class="note" id="n1"></p></section>
@@ -86,9 +86,11 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
     <section class="card"><h2>Préstamos por mes</h2><canvas id="c2" aria-label="Gráfico de préstamos por mes"></canvas></section>
     <section class="card"><h2>Materiales más solicitados</h2><ul class="tl" id="top"></ul></section>
   </div>
+  <section class="card"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Desglose</h2><span class="row"><label for="dim">Ver por</label><select id="dim"></select></span></div>
+    <ul class="tl" id="bd"></ul><p class="note">Haz clic en una fila para filtrar por ese valor.</p></section>
   <section class="card"><h2>Detalle de préstamos</h2>
     <input type="search" id="q" placeholder="Buscar por título, autor o signatura" aria-label="Buscar" style="width:100%;max-width:420px">
-    <div class="tw"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Título</th><th>Autor</th><th>Signatura</th></tr></thead><tbody id="tb"></tbody></table></div>
+    <div class="tw"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Título</th><th>Autor</th><th>Signatura</th><th>Usuario</th><th>Carrera</th></tr></thead><tbody id="tb"></tbody></table></div>
     <p class="note" id="cnt"></p></section>
   <p class="note">El recuento corresponde a transacciones registradas, no a personas: el archivo no identifica estudiantes.</p>
 </div>
@@ -553,7 +555,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 const $=id=>document.getElementById(id);
 const MES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const MESL=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-const KNOWN={BK:"Libros",NTBK:"Notebooks",TES:"Tesis",REC_LUD:"Recurso lúdico"};
+const KNOWN={BK:"Libros",NTBK:"Notebooks",TES:"Tesis",REC_LUD:"Recurso lúdico",CALC:"Calculadoras"};
+const TU={ALUMNOPRE:"Alumno pregrado",ALUMNOPOS:"Alumno posgrado",USO_SALA:"Uso en sala"};
+const FIL=[["ua","Unidad académica"],["tu","Tipo de usuario"],["car","Carrera"],["tp","Tipo de ítem"],["tr","Transacción"]];
+const DIMS=FIL.slice(0,4);
 const PAL=["#2c6db5","#e08a2e","#2a9d8f","#8a5fb0","#c8553d","#7a8b99","#b5a23a","#3d9a5b"];
 const LP={fg:"#1c2530",muted:"#5d6b7a",grid:"#e1e5ea",accent:"#1f5fa8",bg:"#ffffff"};
 const ALIAS={f:["fecha"],car:["carrera","programa"],tu:["tipodeusuario","tipousuario"],tr:["transaccion"],sig:["signatura"],ti:["titulo"],au:["autor"],tp:["tipodeitem","tipoitem"],ua:["unidadacademica"],bib:["bibliotecaorigen","biblioteca"]};
@@ -568,7 +573,8 @@ const tc=s=>{const sm=new Set(["en","de","la","el","los","las","y","del","e","a"
 const pdfT=s=>String(s).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/[^\x00-\xFF]/g,"?");
 const slug=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"").slice(0,40)||"todas";
 
-let ALL=[],TK=[],S={car:"",tr:"",year:null,title:"",edited:false,q:""};
+let ALL=[],TK=[],S={car:"",ua:"",tu:"",tp:"",tr:"",year:null,title:"",edited:false,q:"",dim:"ua"};
+const dimLab=(k,v)=>k==="car"?tc(v):k==="tu"?(TU[v]?TU[v]+" ("+v+")":v):k==="tp"?lab(v):v;
 
 /* ---------- lectura del Excel ---------- */
 function cv(v){if(v==null)return"";if(v instanceof Date)return v;if(typeof v==="object"){if(v.richText)return v.richText.map(t=>t.text).join("");if("result"in v)return cv(v.result);if(v.text)return String(v.text);return String(v)}return v}
@@ -599,32 +605,40 @@ async function loadFile(file){
       if(fv===""&&ti==="")continue;
       const d=toDate(fv);if(!d){bad++;continue}
       const t=k=>{const v=g(k);return v instanceof Date?"":String(v).trim()};
-      rows.push({d,y:d.getUTCFullYear(),m:d.getUTCMonth()+1,car:t("car"),tu:t("tu"),tr:t("tr"),sig:t("sig"),ti:ti||"(sin título)",au:t("au"),tp:t("tp")||"SIN TIPO",ua:t("ua"),bib:t("bib")})}
+      rows.push({d,y:d.getUTCFullYear(),m:d.getUTCMonth()+1,car:t("car")||"(sin carrera)",tu:t("tu"),tr:t("tr"),sig:t("sig"),ti:ti||"(sin título)",au:t("au"),tp:t("tp")||"SIN TIPO",ua:t("ua"),bib:t("bib")})}
     if(!rows.length)throw new Error("Encontré las columnas pero ninguna fila con fecha válida.");
     ALL=rows;
     const cnt={};rows.forEach(r=>cnt[r.tp]=(cnt[r.tp]||0)+1);
     TK=Object.keys(KNOWN).filter(k=>cnt[k]).concat(Object.keys(cnt).filter(k=>!KNOWN[k]).sort((a,b)=>cnt[b]-cnt[a]));
-    S={car:"",tr:"",year:null,title:"",edited:false,q:""};
-    const cars=[...new Set(rows.map(r=>r.car).filter(Boolean))].sort();
-    if(cars.length===1)S.car=cars[0];
-    setupSelects(cars);defaultTitle();
+    S={car:"",ua:"",tu:"",tp:"",tr:"",year:null,title:"",edited:false,q:"",dim:"ua"};
+    const cars=[...new Set(rows.map(r=>r.car))];
+    if(cars.length===1&&cars[0]!=="(sin carrera)")S.car=cars[0];
+    setupSelects();defaultTitle();
     $("drop").hidden=true;$("app").hidden=false;$("app").style.display="flex";$("actions").hidden=false;
     render();
     if(bad){er.textContent="Se omitieron "+bad+" filas con fecha no válida.";er.hidden=false}
   }catch(e){er.textContent=e.message||String(e);er.hidden=false}
 }
-function setupSelects(cars){
-  const c=$("car");c.innerHTML=(cars.length>1?'<option value="">Todas las carreras</option>':"")+cars.map(x=>`<option value="${esc(x)}">${esc(tc(x))}</option>`).join("");
-  c.value=S.car;$("carw").hidden=cars.length<2;
-  const trs=[...new Set(ALL.map(r=>r.tr).filter(Boolean))].sort();
-  $("trs").innerHTML='<option value="">Todas</option>'+trs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
-  $("trw").hidden=trs.length<2}
+function setupSelects(){
+  const box=$("fsel");box.innerHTML="";const multi=[];
+  FIL.forEach(([k,l])=>{
+    const cnt={};ALL.forEach(r=>{if(r[k])cnt[r[k]]=(cnt[r[k]]||0)+1});
+    const vals=Object.keys(cnt).sort(k==="car"?(a,b)=>a.localeCompare(b):(a,b)=>cnt[b]-cnt[a]);
+    if(vals.length>1)multi.push(k);
+    const w=document.createElement("span");w.className="row";w.hidden=vals.length<2;
+    w.innerHTML=`<label for="f_${k}">${l}</label><select id="f_${k}"><option value="">Todos</option>${vals.map(v=>`<option value="${esc(v)}">${esc(dimLab(k,v))} (${cnt[v]})</option>`).join("")}</select>`;
+    box.appendChild(w);const s=w.querySelector("select");s.value=S[k];
+    s.onchange=()=>{S[k]=s.value;defaultTitle();render()}});
+  S.dim=["ua","tu","car","tp"].find(k=>multi.includes(k))||"ua";
+  $("dim").innerHTML=DIMS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("");$("dim").value=S.dim}
+function filtDesc(){return FIL.filter(([k])=>S[k]).map(([k,l])=>l+": "+dimLab(k,S[k]))}
 function defaultTitle(){
   if(S.edited)return;
-  S.title="Préstamos: "+(S.car?tc(S.car):"todas las carreras");$("ttl").value=S.title}
+  const parts=[];if(S.car)parts.push(tc(S.car));if(S.ua)parts.push("Unidad "+S.ua);if(S.tu)parts.push(TU[S.tu]||S.tu);if(S.tp)parts.push(lab(S.tp));
+  S.title="Préstamos: "+(parts.join(" · ")||"todas las carreras y usuarios");$("ttl").value=S.title}
 
 /* ---------- modelo ---------- */
-const base=()=>ALL.filter(r=>(!S.car||r.car===S.car)&&(!S.tr||r.tr===S.tr));
+const base=()=>ALL.filter(r=>FIL.every(([k])=>!S[k]||r[k]===S[k]));
 function model(){
   const b=base(),rows=S.year==null?b:b.filter(r=>r.y===S.year);
   const M={b,rows,total:rows.length};
@@ -641,14 +655,14 @@ function model(){
   const ts=b.map(r=>r.d.getTime()),dmin=new Date(Math.min(...ts)),dmax=new Date(Math.max(...ts));
   M.dmin=dmin;M.dmax=dmax;
   const bibs=[...new Set(b.map(r=>r.bib).filter(Boolean))].slice(0,3).join(", ");
-  M.subtitle=(bibs?"Biblioteca "+bibs+" · ":"")+fmtL(dmin)+" a "+fmtL(dmax)+(S.year!=null?" · Año "+S.year:"");
+  M.subtitle=(bibs?"Biblioteca "+bibs+" · ":"")+fmtL(dmin)+" a "+fmtL(dmax)+(S.year!=null?" · Año "+S.year:"")+(filtDesc().length?" · "+filtDesc().join("; "):"");
   M.notes=[];if(M.zero.length)M.notes.push("Sin registros en "+M.zero.join(", ")+".");M.notes.push("Último registro: "+fmtL(dmax)+".");
   return M}
 
 /* ---------- gráficos (canvas) ---------- */
 function niceStep(m){return [1,2,5,10,20,25,50,100,200,250,500,1000,2000,5000].find(s=>m/s<=4)||10000}
 function drawYear(c,P,M,sel){
-  const W=640,H=270,L=36,B=28,T=20,iw=W-L-8,ih=H-B-T;
+  const W=640,H=270,L=42,B=28,T=20,iw=W-L-8,ih=H-B-T;
   if(P.bg){c.fillStyle=P.bg;c.fillRect(0,0,W,H)}
   const tot=y=>M.keys.reduce((a,k)=>a+M.cy[y][k],0);
   const m=Math.max(1,...M.years.map(tot)),st=niceStep(m),mx=Math.ceil(m/st)*st;
@@ -661,7 +675,7 @@ function drawYear(c,P,M,sel){
     c.globalAlpha=1;c.textAlign="center";c.fillStyle=P.fg;c.font="600 11px 'Segoe UI',sans-serif";c.fillText(acc,x+w/2,T+ih-ih*acc/mx-5);
     c.fillStyle=P.muted;c.font="11px 'Segoe UI',sans-serif";c.fillText(yr,x+w/2,H-9)})}
 function drawMonth(c,P,M){
-  const W=640,H=250,L=32,B=26,T=20,iw=W-L-8,ih=H-B-T,bw=iw/12;
+  const W=640,H=250,L=42,B=26,T=20,iw=W-L-8,ih=H-B-T,bw=iw/12;
   if(P.bg){c.fillStyle=P.bg;c.fillRect(0,0,W,H)}
   const m=Math.max(1,...M.cm),st=niceStep(m),mx=Math.ceil(m/st)*st;
   c.font="11px 'Segoe UI',sans-serif";
@@ -673,11 +687,12 @@ function livePal(){const s=getComputedStyle(document.documentElement),g=n=>s.get
 function png(fn,H,...a){const cv=document.createElement("canvas");paint(cv,fn,H,3,LP,...a);return cv.toDataURL("image/png")}
 
 /* ---------- render ---------- */
+function breakdown(rows,k){const c={};rows.forEach(r=>c[r[k]||"(sin dato)"]=(c[r[k]||"(sin dato)"]||0)+1);return Object.entries(c).map(([v,n])=>({v,n})).sort((a,b)=>b.n-a.n||a.v.localeCompare(b.v))}
 function render(){
-  const M=model();
+  let M=model();if(S.year!=null&&!M.years.includes(S.year)){S.year=null;M=model()}
   const yf=$("yf");yf.innerHTML="";
   [["Todos",null],...M.years.map(y=>[String(y),y])].forEach(([l,v])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",S.year===v);b.onclick=()=>{S.year=v;render()};yf.appendChild(b)});
-  const kp=[[M.total,"préstamos"],...M.keys.map(k=>[M.per[k],lab(k).toLowerCase()]),[M.nT,"títulos distintos"]];
+  const kp=[[M.total,"préstamos"],...M.keys.map(k=>[M.per[k],KNOWN[k]?lab(k).toLowerCase():k]),[M.nT,"títulos distintos"]];
   $("kpis").innerHTML=kp.map(([v,l])=>`<div class="card kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`).join("");
   $("lg").innerHTML=M.keys.map(k=>`<span><i style="background:${PAL[TK.indexOf(k)%PAL.length]}"></i>${esc(lab(k))}</span>`).join("");
   const P=livePal();
@@ -685,14 +700,16 @@ function render(){
   $("n1").textContent=(M.notes||[]).join(" ");
   const mx=M.top.length?M.top[0].n:1;
   $("top").innerHTML=M.top.map(t=>`<li><div><div class="t" title="${esc(t.t)}">${esc(t.t)}</div><div class="bar" style="width:${100*t.n/mx}%"></div></div><span class="n">${t.n}</span></li>`).join("");
+  const bd=breakdown(M.rows,S.dim),bm=bd.length?bd[0].n:1;
+  $("bd").innerHTML=bd.slice(0,15).map(x=>`<li role="button" tabindex="0" data-v="${esc(x.v)}"><div><div class="t" title="${esc(dimLab(S.dim,x.v))}">${esc(dimLab(S.dim,x.v))}</div><div class="bar" style="width:${100*x.n/bm}%"></div></div><span class="n">${x.n}</span></li>`).join("")+(bd.length>15?`<li style="cursor:default"><span class="t">…y ${bd.length-15} más (completo en el Excel)</span></li>`:"");
   const ql=S.q.toLowerCase();
-  const list=M.rows.filter(d=>!ql||(d.ti+" "+d.au+" "+d.sig).toLowerCase().includes(ql)).sort((a,b)=>b.d-a.d);
-  $("tb").innerHTML=list.slice(0,500).map(d=>`<tr><td class="d">${fmtD(d.d)}</td><td><span class="tag" style="background:${PAL[TK.indexOf(d.tp)%PAL.length]}">${esc(lab(d.tp))}</span></td><td>${esc(d.ti)}</td><td>${esc(d.au)}</td><td class="d">${esc(d.sig)}</td></tr>`).join("");
+  const list=M.rows.filter(d=>!ql||(d.ti+" "+d.au+" "+d.sig+" "+d.car+" "+d.tu).toLowerCase().includes(ql)).sort((a,b)=>b.d-a.d);
+  $("tb").innerHTML=list.slice(0,500).map(d=>`<tr><td class="d">${fmtD(d.d)}</td><td><span class="tag" style="background:${PAL[TK.indexOf(d.tp)%PAL.length]}">${esc(lab(d.tp))}</span></td><td>${esc(d.ti)}</td><td>${esc(d.au)}</td><td class="d">${esc(d.sig)}</td><td>${esc(d.tu)}</td><td>${esc(d.car)}</td></tr>`).join("");
   $("cnt").textContent=list.length>500?"Mostrando 500 de "+list.length+" registros; usa el buscador para acotar.":list.length+" registros"}
 
 /* ---------- exportar PDF ---------- */
 function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
-function fname(M,ext){const a=M.years[0],z=M.years[M.years.length-1];return "Prestamos_"+slug(S.car||"todas")+"_"+a+"-"+z+(S.year!=null?"_"+S.year:"")+"."+ext}
+function fname(M,ext){const a=M.years[0],z=M.years[M.years.length-1];return "Prestamos_"+slug([S.car,S.ua,S.tu,S.tp].filter(Boolean).join("_")||"biblioteca")+"_"+a+"-"+z+(S.year!=null?"_"+S.year:"")+"."+ext}
 function pdfOut(){
   const M=model();if(!M.rows.length){showErr("No hay registros para exportar con este filtro.");return}
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4"}),W=210,mg=15,cw=W-2*mg;let y=18;
@@ -701,7 +718,7 @@ function pdfOut(){
   doc.setFont("helvetica","normal").setFontSize(9).setTextColor(93,107,122);
   const sl=doc.splitTextToSize(pdfT(M.subtitle),cw);doc.text(sl,mg,y);y+=sl.length*4.2+4;
   const tk=M.keys.slice().sort((a,b)=>M.per[b]-M.per[a]).slice(0,3);
-  const kp=[[M.total,"préstamos"],...tk.map(k=>[M.per[k],lab(k).toLowerCase()]),[M.nT,"títulos distintos"]],bw=cw/kp.length;
+  const kp=[[M.total,"préstamos"],...tk.map(k=>[M.per[k],KNOWN[k]?lab(k).toLowerCase():k]),[M.nT,"títulos distintos"]],bw=cw/kp.length;
   kp.forEach(([v,l],i)=>{const x=mg+i*bw;doc.setFillColor(241,244,248);doc.setDrawColor(213,219,227);doc.rect(x,y,bw,18,"FD");
     doc.setFont("helvetica","bold").setFontSize(17).setTextColor(28,37,48);doc.text(String(v),x+bw/2,y+9,{align:"center"});
     doc.setFont("helvetica","normal").setFontSize(8).setTextColor(93,107,122);doc.text(pdfT(l),x+bw/2,y+14.5,{align:"center"})});
@@ -721,11 +738,21 @@ function pdfOut(){
     columnStyles:{0:{cellWidth:cw-28},1:{halign:"center",cellWidth:28}},margin:{left:mg,right:mg}});
   y=doc.lastAutoTable.finalY+5;doc.setFont("helvetica","normal").setFontSize(8).setTextColor(93,107,122);
   doc.text(doc.splitTextToSize("Nota: el recuento corresponde a transacciones registradas en Koha; el archivo no identifica estudiantes, por lo que las cifras no representan número de personas.",cw),mg,y);
-  doc.addPage();y=18;h2("Detalle de préstamos");
+  const dd=DIMS.filter(([k])=>!S[k]&&breakdown(M.rows,k).length>1);
+  if(dd.length){doc.addPage();y=18;
+    dd.forEach(([k,l],i)=>{const bd=breakdown(M.rows,k),top=bd.slice(0,10);if(i&&y>235){doc.addPage();y=18}
+      h2("Préstamos por "+l.toLowerCase()+(bd.length>10?" (10 principales de "+bd.length+")":""));
+      doc.autoTable({startY:y,head:[[l,"Préstamos","%"]],body:top.map(x=>[pdfT(dimLab(k,x.v)),x.n,(100*x.n/M.total).toFixed(1)+"%"]),theme:"grid",styles:{fontSize:8.5,cellPadding:1.5},headStyles:{fillColor:[31,95,168]},
+        columnStyles:{0:{cellWidth:cw-52},1:{halign:"center",cellWidth:26},2:{halign:"center",cellWidth:26}},margin:{left:mg,right:mg}});
+      y=doc.lastAutoTable.finalY+8})}
   const det=M.rows.slice().sort((a,b)=>a.d-b.d);
+  if(det.length>1500){if(!dd.length){doc.addPage();y=18}else if(y>260){doc.addPage();y=18}
+    doc.setFont("helvetica","normal").setFontSize(8.5).setTextColor(93,107,122);
+    doc.text(doc.splitTextToSize("El detalle de "+det.length+" préstamos no se incluye en el PDF por su extensión. Está completo en el Excel (hoja Detalle). Para un PDF con detalle, filtra hasta quedar bajo 1.500 registros.",cw),mg,y)}
+  else{doc.addPage();y=18;h2("Detalle de préstamos");
   doc.autoTable({startY:y,head:[["Fecha","Tipo","Título","Autor","Signatura"]],body:det.map(r=>[fmtD(r.d),pdfT(lab(r.tp)),pdfT(r.ti),pdfT(r.au),pdfT(r.sig)]),theme:"grid",
     styles:{fontSize:7.5,cellPadding:1.3,overflow:"linebreak"},headStyles:{fillColor:[31,95,168]},alternateRowStyles:{fillColor:[246,247,249]},
-    columnStyles:{0:{cellWidth:19},1:{cellWidth:22},2:{cellWidth:78},3:{cellWidth:41},4:{cellWidth:20}},margin:{left:mg,right:mg}});
+    columnStyles:{0:{cellWidth:19},1:{cellWidth:22},2:{cellWidth:78},3:{cellWidth:41},4:{cellWidth:20}},margin:{left:mg,right:mg}})}
   const n=doc.getNumberOfPages(),hoy=fmtD(new Date());
   for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("helvetica","normal").setFontSize(7.5).setTextColor(130,130,130);doc.text("Generado el "+hoy,mg,289);doc.text("Página "+i+" de "+n,W-mg,289,{align:"right"})}
   dl(doc.output("blob"),fname(M,"pdf"))}
@@ -755,6 +782,9 @@ async function xlsOut(){
   const id2=wb.addImage({base64:png(drawMonth,250,M),extension:"png"});wm.addImage(id2,{tl:{col:3,row:1},ext:{width:640,height:250}});
   const wt=wb.addWorksheet("Más solicitados");hdr(wt.addRow(["Título","Autor","Préstamos"]));
   M.titles.forEach(t=>wt.addRow([t.t,t.a,t.n]));wt.getColumn(1).width=70;wt.getColumn(2).width=34;wt.getColumn(3).width=12;wt.views=[{state:"frozen",ySplit:1}];
+  const wg=wb.addWorksheet("Desglose");wg.getColumn(1).width=46;wg.getColumn(2).width=12;wg.getColumn(3).width=10;
+  DIMS.forEach(([k,l])=>{const bd=breakdown(M.rows,k);hdr(wg.addRow([l,"Préstamos","%"]));
+    bd.forEach(x=>{const r=wg.addRow([dimLab(k,x.v),x.n,x.n/M.total]);r.getCell(3).numFmt="0.0%"});wg.addRow([])});
   const wd=wb.addWorksheet("Detalle");
   hdr(wd.addRow(["Fecha","Carrera","Tipo de usuario","Transacción","Tipo de ítem","Signatura","Título","Autor","Unidad académica","Biblioteca origen"]));
   M.rows.slice().sort((a,b)=>a.d-b.d).forEach(r=>wd.addRow([r.d,r.car,r.tu,r.tr,lab(r.tp),r.sig,r.ti,r.au,r.ua,r.bib]));
@@ -773,8 +803,10 @@ $("drop").addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)loadF
 $("bnew").onclick=()=>{$("app").hidden=true;$("app").style.display="none";$("actions").hidden=true;$("drop").hidden=false;$("err").hidden=true;$("fi").click()};
 $("bpdf").onclick=()=>guard($("bpdf"),pdfOut);
 $("bxls").onclick=()=>guard($("bxls"),xlsOut);
-$("car").onchange=e=>{S.car=e.target.value;S.year=null;defaultTitle();render()};
-$("trs").onchange=e=>{S.tr=e.target.value;S.year=null;render()};
+$("dim").onchange=e=>{S.dim=e.target.value;render()};
+function pickBd(li){if(!li||li.dataset.v==null)return;const v=li.dataset.v;if(v==="(sin dato)")return;S[S.dim]=v;const s=$("f_"+S.dim);if(s)s.value=v;defaultTitle();render()}
+$("bd").addEventListener("click",e=>pickBd(e.target.closest("li")));
+$("bd").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pickBd(e.target.closest("li"))}});
 $("ttl").oninput=e=>{S.title=e.target.value;S.edited=true};
 $("q").oninput=e=>{S.q=e.target.value;render()};
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{if(!$("app").hidden)render()});
