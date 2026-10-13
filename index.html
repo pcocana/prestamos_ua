@@ -4,20 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Informe de Préstamos por Carrera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>
-:root{--bg:#f6f7f9;--surface:#fff;--fg:#1c2530;--muted:#5d6b7a;--line:#e1e5ea;--accent:#1f5fa8;--grid:#e8ebef;--ok:#1d7a4d;--err:#b3261e}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171d;--surface:#1a2129;--fg:#e6ebf0;--muted:#9aa8b6;--line:#2a343e;--accent:#6aa8ec;--grid:#26303a;--ok:#4cc28a;--err:#f2867f;color-scheme:dark}}
+:root{--bg:#f6f7f9;--surface:#fff;--fg:#1c2530;--muted:#5d6b7a;--line:#e1e5ea;--accent:#12305a;--on-accent:#fff;--gold:#b8902f;--grid:#e8ebef;--ok:#1d7a4d;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171d;--surface:#1a2129;--fg:#e6ebf0;--muted:#9aa8b6;--line:#2a343e;--accent:#8db3ec;--on-accent:#0f1722;--gold:#d4a72c;--grid:#26303a;--ok:#4cc28a;--err:#f2867f;color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;font-size:14px;line-height:1.45;padding-inline:16px;padding-block:24px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;font-size:14px;line-height:1.45;padding-inline:16px;padding-block:24px}
 .wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-header{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
+header{border-top:4px solid var(--gold);padding-top:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
 h1{font-size:1.45rem;margin:0;font-weight:600;text-wrap:balance}
 .sub{color:var(--muted);margin:4px 0 0;font-size:.9rem}
 h2{font-size:.76rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:600}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .btn{font:inherit;font-size:.88rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:6px;cursor:pointer}
-.btn.p{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.btn.p{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.p:hover{border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold)}
 .btn:disabled{opacity:.5;cursor:wait}
 .btn:focus-visible,.chip:focus-visible,input:focus-visible,select:focus-visible,.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:48px 20px;border:2px dashed var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
@@ -31,9 +34,9 @@ h2{font-size:.76rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mu
 input[type=text],input[type=search],select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);min-width:0}
 #ttl{flex:1;min-width:240px}
 .chip{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:5px 12px;border-radius:999px;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-.kpi .v{font-size:1.8rem;font-weight:600;font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+.kpi .v{font-size:1.8rem;font-weight:600;font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
 .kpi .l{color:var(--muted);font-size:.82rem}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:18px}
 canvas{width:100%;height:auto;display:block}
@@ -44,7 +47,7 @@ canvas{width:100%;height:auto;display:block}
 .tl .bar{height:5px;background:var(--accent);border-radius:3px;margin-top:3px}
 #bd li{cursor:pointer}#bd li:hover .t{color:var(--accent)}
 .tl .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tl .n{text-align:right;font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+.tl .n{text-align:right;font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
 .tw{overflow:auto;max-height:420px;margin-top:10px}
 table{border-collapse:collapse;width:100%;font-size:.84rem}
 th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -559,8 +562,8 @@ const KNOWN={BK:"Libros",NTBK:"Notebooks",TES:"Tesis",REC_LUD:"Recurso lúdico",
 const TU={ALUMNOPRE:"Alumno pregrado",ALUMNOPOS:"Alumno posgrado",USO_SALA:"Uso en sala"};
 const FIL=[["ua","Unidad académica"],["tu","Tipo de usuario"],["car","Carrera"],["tp","Tipo de ítem"],["tr","Transacción"]];
 const DIMS=FIL.slice(0,4);
-const PAL=["#2c6db5","#e08a2e","#2a9d8f","#8a5fb0","#c8553d","#7a8b99","#b5a23a","#3d9a5b"];
-const LP={fg:"#1c2530",muted:"#5d6b7a",grid:"#e1e5ea",accent:"#1f5fa8",bg:"#ffffff"};
+const PAL=["#2b5797","#d4a72c","#2a9d8f","#8a5fb0","#c8553d","#7a8b99","#8c6b4f","#3d9a5b"];
+const LP={fg:"#1c2530",muted:"#5d6b7a",grid:"#e1e5ea",accent:"#12305a",bg:"#ffffff"};
 const ALIAS={f:["fecha"],car:["carrera","programa"],tu:["tipodeusuario","tipousuario"],tr:["transaccion"],sig:["signatura"],ti:["titulo"],au:["autor"],tp:["tipodeitem","tipoitem"],ua:["unidadacademica"],bib:["bibliotecaorigen","biblioteca"]};
 const norm=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -666,19 +669,19 @@ function drawYear(c,P,M,sel){
   if(P.bg){c.fillStyle=P.bg;c.fillRect(0,0,W,H)}
   const tot=y=>M.keys.reduce((a,k)=>a+M.cy[y][k],0);
   const m=Math.max(1,...M.years.map(tot)),st=niceStep(m),mx=Math.ceil(m/st)*st;
-  c.font="11px 'Segoe UI',sans-serif";c.textBaseline="alphabetic";
+  c.font="11px 'IBM Plex Sans','Segoe UI',sans-serif";c.textBaseline="alphabetic";
   for(let v=0;v<=mx;v+=st){const y=T+ih-ih*v/mx;c.strokeStyle=P.grid;c.lineWidth=1;c.beginPath();c.moveTo(L,y);c.lineTo(W-8,y);c.stroke();c.fillStyle=P.muted;c.textAlign="right";c.fillText(v,L-6,y+4)}
   const n=M.years.length,bw=iw/n;
   M.years.forEach((yr,i)=>{
     const w=Math.min(bw*.64,70),x=L+i*bw+(bw-w)/2;let acc=0;c.globalAlpha=(sel==null||sel===yr)?1:.28;
     M.keys.forEach(k=>{const v=M.cy[yr][k];if(!v)return;const h=ih*v/mx,y=T+ih-ih*(acc+v)/mx;c.fillStyle=PAL[TK.indexOf(k)%PAL.length];c.fillRect(x,y,w,h);acc+=v});
-    c.globalAlpha=1;c.textAlign="center";c.fillStyle=P.fg;c.font="600 11px 'Segoe UI',sans-serif";c.fillText(acc,x+w/2,T+ih-ih*acc/mx-5);
-    c.fillStyle=P.muted;c.font="11px 'Segoe UI',sans-serif";c.fillText(yr,x+w/2,H-9)})}
+    c.globalAlpha=1;c.textAlign="center";c.fillStyle=P.fg;c.font="600 11px 'IBM Plex Sans','Segoe UI',sans-serif";c.fillText(acc,x+w/2,T+ih-ih*acc/mx-5);
+    c.fillStyle=P.muted;c.font="11px 'IBM Plex Sans','Segoe UI',sans-serif";c.fillText(yr,x+w/2,H-9)})}
 function drawMonth(c,P,M){
   const W=640,H=250,L=42,B=26,T=20,iw=W-L-8,ih=H-B-T,bw=iw/12;
   if(P.bg){c.fillStyle=P.bg;c.fillRect(0,0,W,H)}
   const m=Math.max(1,...M.cm),st=niceStep(m),mx=Math.ceil(m/st)*st;
-  c.font="11px 'Segoe UI',sans-serif";
+  c.font="11px 'IBM Plex Sans','Segoe UI',sans-serif";
   for(let v=0;v<=mx;v+=st){const y=T+ih-ih*v/mx;c.strokeStyle=P.grid;c.lineWidth=1;c.beginPath();c.moveTo(L,y);c.lineTo(W-8,y);c.stroke();c.fillStyle=P.muted;c.textAlign="right";c.fillText(v,L-6,y+4)}
   M.cm.forEach((v,i)=>{const h=ih*v/mx,x=L+i*bw+bw*.15,w=bw*.7;c.fillStyle=P.accent;c.fillRect(x,T+ih-h,w,h);c.textAlign="center";
     if(v){c.fillStyle=P.fg;c.fillText(v,x+w/2,T+ih-h-4)}c.fillStyle=P.muted;c.fillText(MES[i],x+w/2,H-8)})}
@@ -714,7 +717,7 @@ function pdfOut(){
   const M=model();if(!M.rows.length){showErr("No hay registros para exportar con este filtro.");return}
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4"}),W=210,mg=15,cw=W-2*mg;let y=18;
   const h2=t=>{doc.setFont("helvetica","bold").setFontSize(11).setTextColor(31,95,168);doc.text(pdfT(t),mg,y);y+=4};
-  const tl=doc.splitTextToSize(pdfT(S.title),cw);doc.setFont("helvetica","bold").setFontSize(16).setTextColor(28,37,48);doc.text(tl,mg,y);y+=tl.length*7;
+  const tl=doc.splitTextToSize(pdfT(S.title),cw);doc.setFont("helvetica","bold").setFontSize(16).setTextColor(28,37,48);doc.text(tl,mg,y);y+=tl.length*7;doc.setDrawColor(184,144,47).setLineWidth(.8).line(mg,y-4,mg+22,y-4);
   doc.setFont("helvetica","normal").setFontSize(9).setTextColor(93,107,122);
   const sl=doc.splitTextToSize(pdfT(M.subtitle),cw);doc.text(sl,mg,y);y+=sl.length*4.2+4;
   const tk=M.keys.slice().sort((a,b)=>M.per[b]-M.per[a]).slice(0,3);
@@ -730,11 +733,11 @@ function pdfOut(){
   const colt=M.keys.map(lab),tot={};M.keys.forEach(k=>tot[k]=M.years.reduce((a,yy)=>a+M.cy[yy][k],0));
   doc.autoTable({startY:y,head:[["Año",...colt,"Total"]],body:M.years.map(yy=>[String(yy),...M.keys.map(k=>M.cy[yy][k]),M.keys.reduce((a,k)=>a+M.cy[yy][k],0)]),
     foot:[["Total",...M.keys.map(k=>tot[k]),M.keys.reduce((a,k)=>a+tot[k],0)]],theme:"grid",styles:{fontSize:9,halign:"center",cellPadding:1.6},
-    headStyles:{fillColor:[31,95,168]},footStyles:{fillColor:[241,244,248],textColor:[28,37,48],fontStyle:"bold"},margin:{left:mg,right:mg}});
+    headStyles:{fillColor:[18,48,90]},footStyles:{fillColor:[241,244,248],textColor:[28,37,48],fontStyle:"bold"},margin:{left:mg,right:mg}});
   doc.addPage();y=18;h2("Préstamos por mes"+(S.year!=null?" ("+S.year+")":" (todo el período)"));
   const ch2=cw*250/640;doc.addImage(png(drawMonth,250,M),"PNG",mg,y,cw,ch2);y+=ch2+6;
   h2("Materiales más solicitados");
-  doc.autoTable({startY:y,head:[["Título","Préstamos"]],body:M.top.map(t=>[pdfT(t.t),t.n]),theme:"grid",styles:{fontSize:8.5,cellPadding:1.5},headStyles:{fillColor:[31,95,168]},
+  doc.autoTable({startY:y,head:[["Título","Préstamos"]],body:M.top.map(t=>[pdfT(t.t),t.n]),theme:"grid",styles:{fontSize:8.5,cellPadding:1.5},headStyles:{fillColor:[18,48,90]},
     columnStyles:{0:{cellWidth:cw-28},1:{halign:"center",cellWidth:28}},margin:{left:mg,right:mg}});
   y=doc.lastAutoTable.finalY+5;doc.setFont("helvetica","normal").setFontSize(8).setTextColor(93,107,122);
   doc.text(doc.splitTextToSize("Nota: el recuento corresponde a transacciones registradas en Koha; el archivo no identifica estudiantes, por lo que las cifras no representan número de personas.",cw),mg,y);
@@ -742,7 +745,7 @@ function pdfOut(){
   if(dd.length){doc.addPage();y=18;
     dd.forEach(([k,l],i)=>{const bd=breakdown(M.rows,k),top=bd.slice(0,10);if(i&&y>235){doc.addPage();y=18}
       h2("Préstamos por "+l.toLowerCase()+(bd.length>10?" (10 principales de "+bd.length+")":""));
-      doc.autoTable({startY:y,head:[[l,"Préstamos","%"]],body:top.map(x=>[pdfT(dimLab(k,x.v)),x.n,(100*x.n/M.total).toFixed(1)+"%"]),theme:"grid",styles:{fontSize:8.5,cellPadding:1.5},headStyles:{fillColor:[31,95,168]},
+      doc.autoTable({startY:y,head:[[l,"Préstamos","%"]],body:top.map(x=>[pdfT(dimLab(k,x.v)),x.n,(100*x.n/M.total).toFixed(1)+"%"]),theme:"grid",styles:{fontSize:8.5,cellPadding:1.5},headStyles:{fillColor:[18,48,90]},
         columnStyles:{0:{cellWidth:cw-52},1:{halign:"center",cellWidth:26},2:{halign:"center",cellWidth:26}},margin:{left:mg,right:mg}});
       y=doc.lastAutoTable.finalY+8})}
   const det=M.rows.slice().sort((a,b)=>a.d-b.d);
@@ -751,7 +754,7 @@ function pdfOut(){
     doc.text(doc.splitTextToSize("El detalle de "+det.length+" préstamos no se incluye en el PDF por su extensión. Está completo en el Excel (hoja Detalle). Para un PDF con detalle, filtra hasta quedar bajo 1.500 registros.",cw),mg,y)}
   else{doc.addPage();y=18;h2("Detalle de préstamos");
   doc.autoTable({startY:y,head:[["Fecha","Tipo","Título","Autor","Signatura"]],body:det.map(r=>[fmtD(r.d),pdfT(lab(r.tp)),pdfT(r.ti),pdfT(r.au),pdfT(r.sig)]),theme:"grid",
-    styles:{fontSize:7.5,cellPadding:1.3,overflow:"linebreak"},headStyles:{fillColor:[31,95,168]},alternateRowStyles:{fillColor:[246,247,249]},
+    styles:{fontSize:7.5,cellPadding:1.3,overflow:"linebreak"},headStyles:{fillColor:[18,48,90]},alternateRowStyles:{fillColor:[246,247,249]},
     columnStyles:{0:{cellWidth:19},1:{cellWidth:22},2:{cellWidth:78},3:{cellWidth:41},4:{cellWidth:20}},margin:{left:mg,right:mg}})}
   const n=doc.getNumberOfPages(),hoy=fmtD(new Date());
   for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("helvetica","normal").setFontSize(7.5).setTextColor(130,130,130);doc.text("Generado el "+hoy,mg,289);doc.text("Página "+i+" de "+n,W-mg,289,{align:"right"})}
@@ -761,7 +764,7 @@ function pdfOut(){
 async function xlsOut(){
   const M=model();if(!M.rows.length){showErr("No hay registros para exportar con este filtro.");return}
   const wb=new ExcelJS.Workbook();wb.created=new Date();
-  const hdr=r=>{r.font={bold:true,color:{argb:"FFFFFFFF"}};r.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F5FA8"}}};
+  const hdr=r=>{r.font={bold:true,color:{argb:"FFFFFFFF"}};r.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF12305A"}}};
   const ws=wb.addWorksheet("Resumen");
   ws.getCell("A1").value=S.title;ws.getCell("A1").font={bold:true,size:15};
   ws.getCell("A2").value=M.subtitle;ws.getCell("A2").font={color:{argb:"FF5D6B7A"}};
@@ -809,6 +812,7 @@ $("bd").addEventListener("click",e=>pickBd(e.target.closest("li")));
 $("bd").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pickBd(e.target.closest("li"))}});
 $("ttl").oninput=e=>{S.title=e.target.value;S.edited=true};
 $("q").oninput=e=>{S.q=e.target.value;render()};
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(!$("app").hidden)render()});
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{if(!$("app").hidden)render()});
 </script>
 </body>
